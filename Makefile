@@ -1,7 +1,6 @@
 # Dump the accounts with the program while running the localnet validator
-dump-accounts:
-	solana account --url localhost PPLxwat1miBwyQHq5afxLzdXyAMG4jPp6981yQA5hyb --output json  > ./accounts/PPLxwat1miBwyQHq5afxLzdXyAMG4jPp6981yQA5hyb.json
-	solana account --url localhost GhLoYioKnbZ1T2DGXtNwu6ZzBFe11LfHDYV6scs8Tkry --output json  > ./accounts/GhLoYioKnbZ1T2DGXtNwu6ZzBFe11LfHDYV6scs8Tkry.json
+dump-program:
+	solana program dump --url localhost PPLxwat1miBwyQHq5afxLzdXyAMG4jPp6981yQA5hyb ./program/pubkey_profile.so
 
 # Utility to get the fee payer address
 fee-payer-address:
@@ -17,4 +16,5 @@ run-validator:
 	    --account-dir ./accounts \
 	    --config ./config.yml \
 	    --ledger ./test-ledger \
+	    --bpf-program PPLxwat1miBwyQHq5afxLzdXyAMG4jPp6981yQA5hyb ./program/pubkey_profile.so \
 	    --reset
