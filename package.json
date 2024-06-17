@@ -1,0 +1,16 @@
+{
+	"devDependencies": {
+		"@faker-js/faker": "^8.4.1",
+		"@solana-developers/helpers": "^2.3.0",
+		"@types/node": "^20.14.2",
+		"dotenv": "^16.4.5",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.4.5"
+	},
+	"dependencies": {
+		"@coral-xyz/anchor": "^0.30.0",
+		"@pubkey-program-library/anchor": "^1.7.1",
+		"@pubkey-program-library/sdk": "^1.7.1",
+		"@solana/web3.js": "^1.93.0"
+	}
+}
