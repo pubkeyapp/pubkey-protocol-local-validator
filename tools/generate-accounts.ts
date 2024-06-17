@@ -30,7 +30,7 @@ function generateAccount(index: number, offset = 1000): GeneratedAccount {
     return {
         username: faker.internet.userName({ firstName, lastName }).toLowerCase().replace('.', '_').replace('-', '_').substring(0, 19),
         name: `${firstName} ${lastName}`,
-        avatarUrl: `https://ipfs.io/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/${seed}`,
+        avatarUrl: `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${seed}`,
         publicKey: keypair.publicKey.toString(),
         secretKey: `[${Array.from(keypair.secretKey).join(',')}]`
     };

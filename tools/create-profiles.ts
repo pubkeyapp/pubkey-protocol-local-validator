@@ -9,8 +9,6 @@ import {ProfileService} from "./profile.service";
 
 config()
 
-// SOLANA_RPC_ENDPOINT
-
 async function main() {
     const endpoint = process.env['SOLANA_RPC_ENDPOINT']
     if (!endpoint) {
@@ -30,25 +28,33 @@ async function main() {
 
     const service = new ProfileService({ connection, feePayer })
 
+    const total = accounts.length
+
+    let index = 1;
     for (const account of accounts) {
-        const keypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(account.secretKey)))
-        if (keypair.publicKey.toString() !== account.publicKey) {
-            throw new Error(`Keypair mismatch for ${account.username}`)
-        }
-        try {
-            console.log(`Username : ${account.username}`)
-            const tx = await service.createUserProfile(account)
-            console.log(`Signing  : ${keypair.publicKey}`)
-            tx.sign([keypair])
+        await createProfile({ account, service, index: index++, total  })
+    }
+    // await Promise.all(accounts.map((account, index) => createProfile({ account, service, index: index + 1, total })))
+}
 
-            console.log(`Confirming...`)
-            await service.signAndConfirmTransaction(tx)
-            console.log(`Done!`)
+async function createProfile({ account, service, index, total }: {
+    account: GeneratedAccount, service: ProfileService, index: number, total: number
+}) {
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(account.secretKey)))
+    if (keypair.publicKey.toString() !== account.publicKey) {
+        throw new Error(`Keypair mismatch for ${account.username}`)
+    }
+    try {
+        console.log(`Username : ${account.username}`)
+        const tx = await service.createUserProfile(account)
+        console.log(` > Signing  : ${keypair.publicKey}`)
+        tx.sign([keypair])
+        console.log(` > Confirming...`)
+        await service.signAndConfirmTransaction(tx, 'processed')
+        console.log(` > ${index}/${total} done\n`)
 
-        } catch (e) {
-            console.log(`Error: ${e}`)
-        }
-
+    } catch (e) {
+        console.log(`Error: ${e}`)
     }
 }
 

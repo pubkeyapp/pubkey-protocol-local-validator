@@ -1,7 +1,15 @@
 import {AnchorProvider} from '@coral-xyz/anchor'
 import {PUBKEY_PROFILE_PROGRAM_ID, PubKeyIdentityProvider, PubKeyProfile} from '@pubkey-program-library/anchor'
 import {AnchorKeypairWallet, PubKeyProfileSdk} from '@pubkey-program-library/sdk'
-import {Connection, Keypair, PublicKey, VersionedTransaction} from '@solana/web3.js'
+import {
+  BlockhashWithExpiryBlockHeight,
+  Commitment,
+  Connection,
+  Keypair,
+  PublicKey,
+  VersionedTransaction
+} from '@solana/web3.js'
+import {LRUCache} from "lru-cache";
 import {GeneratedAccount} from "./generate-accounts";
 
 
@@ -11,6 +19,15 @@ export interface ProfileServiceConfig {
 }
 
 export class ProfileService {
+  private readonly cacheLatestBlockhash = new LRUCache<string, BlockhashWithExpiryBlockHeight>({
+    max: 1000,
+    ttl: 30_000,
+    fetchMethod: async (commitment = 'confirmed') => {
+      console.log(`Caching latest blockhash`)
+      return this.config.connection.getLatestBlockhash(commitment as Commitment)
+    },
+  })
+
   private readonly sdk: PubKeyProfileSdk
   private readonly feePayer: Keypair
   private readonly validProviders: PubKeyIdentityProvider[] = [
@@ -81,15 +98,20 @@ export class ProfileService {
     return this.sdk.getProfiles().then((res) => res.sort((a, b) => a.username.localeCompare(b.username)))
   }
 
-  async signAndConfirmTransaction(transaction: VersionedTransaction) {
+  async signAndConfirmTransaction(transaction: VersionedTransaction, commitment: Commitment = 'confirmed') {
     console.log(' - signAndConfirmTransaction sign with fee payer ')
     transaction.sign([this.config.feePayer])
 
-    const { blockhash, lastValidBlockHeight } = await this.config.connection.getLatestBlockhash()
+    const bh = await this.cacheLatestBlockhash.fetch(commitment)
+    if (!bh) {
+      throw new Error(`Error fetching latest blockhash`)
+    }
+    const { blockhash, lastValidBlockHeight } = bh
     return this.sendAndConfirmTransaction({
       transaction,
       blockhash,
       lastValidBlockHeight,
+      commitment,
     })
   }
 
@@ -97,14 +119,16 @@ export class ProfileService {
                                     transaction,
                                     blockhash,
                                     lastValidBlockHeight,
+      commitment = 'confirmed'
                                   }: {
     transaction: VersionedTransaction
     blockhash: string
     lastValidBlockHeight: number
+    commitment: Commitment
   }): Promise<string> {
-    const signature = await this.config.connection.sendTransaction(transaction, { skipPreflight: false })
+    const signature = await this.config.connection.sendTransaction(transaction, { skipPreflight: true })
     console.log(`Signature: ${this.getExplorerUrl(`tx/${signature}`)}`)
-    await this.config.connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature }, 'confirmed')
+    await this.config.connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature }, commitment)
     console.log(`Confirmed: ${signature}`)
     return signature
   }

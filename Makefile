@@ -18,3 +18,12 @@ run-validator:
 	    --ledger ./test-ledger \
 	    --bpf-program PPLxwat1miBwyQHq5afxLzdXyAMG4jPp6981yQA5hyb ./program/pubkey_profile.so \
 	    --reset
+
+# Create profiles in tools/generated.json
+create-profiles:
+	ts-node ./tools/create-profiles.ts
+
+
+# Generate Accounts
+generate-accounts:
+	ts-node ./tools/generate-accounts.ts > tools/generated.json
